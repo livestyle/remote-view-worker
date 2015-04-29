@@ -1,0 +1,14 @@
+{
+  "name": "remote-view-worker",
+  "version": "1.0.0",
+  "description": "LiveStyle Remote View server worker: handles connectivity with RV clients",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Sergey Chikuyonok",
+  "license": "MIT",
+  "dependencies": {
+    "bouncy": "^3.2.2"
+  }
+}
