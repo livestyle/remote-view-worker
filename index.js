@@ -3,34 +3,35 @@
 
 var net = require('net');
 var bouncy = require('bouncy');
-
-var sockets = [];
+var debug = require('debug')('rv-worker');
+var session = require('./lib/session');
+var errorResponse = require('./lib/error-response');
 
 // socket server
-net.createServer(function(client) {
-	console.log('client connected');
-	sockets.push(client);
-
-	client.on('end', function() {
-		console.log('client disconnected')
-		var ix = sockets.indexOf(client);
-		if (ix !== -1) {
-			sockets.splice(ix, 1);
-		}
-	});
+net.createServer(function(socket) {
+	debug('socket connected');
+	var s = session(socket);
+	if (s) {
+		s.addSocket(socket);
+	} else {
+		// error: no session for given client
+		debug('no session for socket');
+		s.destroy();
+	}
 }).listen(9001, function() {
-	console.log('Created socket server');
+	debug('Created socket server');
 });
 
 // http server
-bouncy(function(req, bounce) {
-	console.log('got request for', req.url);
-	if (sockets.length) {
-		console.log('bouncing...');
-		bounce(sockets[0]);
+bouncy(function(req, res, bounce) {
+	debug('got request for %s', req.headers.host + req.url);
+
+	var s = session(req);
+	if (s) {
+		s.redirect(req, res, bounce);
 	} else {
-		console.error('no available sockets');
+		errorResponse(res, 'no-session');
 	}
 }).listen(9002, function() {
-	console.log('Created HTTP server');
+	debug('Created HTTP server');
 });

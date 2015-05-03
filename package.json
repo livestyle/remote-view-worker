@@ -9,6 +9,7 @@
   "author": "Sergey Chikuyonok",
   "license": "MIT",
   "dependencies": {
-    "bouncy": "^3.2.2"
+    "bouncy": "^3.2.2",
+    "debug": "^2.1.3"
   }
 }
