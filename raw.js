@@ -5,6 +5,51 @@ var http = require('http');
 var net = require('net');
 var transformHTTP = require('./lib/transform-http');
 var through = require('through2');
+var combine = require('./lib/http-body-combine');
+
+function inject(code) {
+	if (typeof code === 'string') {
+		code = new Buffer(code);
+	}
+
+	var marker = new Buffer('</head>');
+	var body = new Buffer('');
+	var injected = false;
+	var bodyTransform = through(function(chunk, enc, next) {
+		if (injected) {
+			// code already injected, simply pass through
+			return next(null, chunk);
+		}
+
+		body = Buffer.concat([body, chunk]);
+		let ix = body.indexOf(marker);
+		if (ix !== -1) {
+			// marker found, inject code
+			body = Buffer.concat([body.slice(0, ix), code, body.slice(ix)]);
+
+			// modify content-length of http header
+			this.httpHeader.adjustContentLength(code.length);
+
+			this.push(body);
+			body = null
+			injected = true;
+		}
+
+		next();
+	}, function(next) {
+		if (injected && body && body.length) {
+			this.push(body);
+		}
+		next();
+	});
+
+	var uppercase = through(function(chunk, enc, next) {
+		chunk = chunk.toString('utf8').toUpperCase();
+		return next(null, new Buffer(chunk));
+	});
+
+	return transformHTTP(combine(bodyTransform, uppercase));
+}
 
 // server
 net.createServer(function(socket) {
@@ -16,10 +61,7 @@ net.createServer(function(socket) {
 			connection: 'close'
 		}))
 		.pipe(remote, {end: false})
-		.pipe(through(function(chunk, enc, next) {
-			this.push(new Buffer(chunk.toString().replace('Test', 'HELO')));
-			next();
-		}))
+		.pipe(inject('<!-- injected!! -->'))
 		.pipe(socket);
 	});
 }).listen(9001, function() {
