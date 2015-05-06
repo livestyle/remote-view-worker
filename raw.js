@@ -48,7 +48,17 @@ function inject(code) {
 		return next(null, new Buffer(chunk));
 	});
 
-	return transformHTTP(combine(bodyTransform, uppercase));
+	var replace = through(function(chunk, enc, next) {
+		var header = this.httpHeader;
+		chunk = chunk.toString('utf8').replace(/TEST/g, function() {
+			header.adjustContentLength(-1);
+			return 'foo';
+		});
+
+		return next(null, new Buffer(chunk));
+	});
+
+	return transformHTTP(combine(bodyTransform, uppercase, replace));
 }
 
 // server

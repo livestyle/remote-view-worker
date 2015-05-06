@@ -9,7 +9,6 @@
   "author": "Sergey Chikuyonok",
   "license": "MIT",
   "dependencies": {
-    "bouncy": "^3.2.2",
     "debug": "^2.1.3",
     "stream-combiner2": "^1.0.2",
     "through2": "^1.1.1"
