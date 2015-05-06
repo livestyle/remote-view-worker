@@ -30,7 +30,7 @@ net.createServer(function(socket) {
 	if (s) {
 		s.redirect(socket);
 	} else {
-		errorResponse(res, 'no-session');
+		errorResponse(socket, 'no-session');
 	}
 }).listen(9002, function() {
 	debug('Created HTTP server');
