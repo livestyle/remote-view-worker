@@ -3,7 +3,6 @@
 
 var net = require('net');
 var http = require('http');
-var bouncy = require('bouncy');
 var debug = require('debug')('rv-worker');
 var session = require('./lib/session');
 var errorResponse = require('./lib/error-response');
@@ -36,16 +35,3 @@ net.createServer(function(socket) {
 }).listen(9002, function() {
 	debug('Created HTTP server');
 });
-
-// bouncy(function(req, res, bounce) {
-// 	debug('got request for %s', req.headers.host + req.url);
-
-// 	var s = session(req);
-// 	if (s) {
-// 		s.redirect(req, res, bounce);
-// 	} else {
-// 		errorResponse(res, 'no-session');
-// 	}
-// }).listen(9002, function() {
-// 	debug('Created HTTP server');
-// });
