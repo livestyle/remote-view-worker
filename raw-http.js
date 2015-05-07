@@ -6,6 +6,8 @@ var net = require('net');
 var through = require('through2');
 var httpParser = require('./lib/http-parser');
 
+const CRLF = '\r\n';
+
 http.createServer(function(req, res) {
 	console.log('HTTP request');
 	console.log(createHTTPHeader(req));
@@ -48,6 +50,6 @@ function createHTTPHeader(req) {
 		lines.push(req.rawHeaders[i] + ': ' + req.rawHeaders[i + 1]);
 	}
 
-	lines.push('\r\n');
-	return lines.join('\r\n');
+	lines.push(CRLF);
+	return lines.join(CRLF);
 }
