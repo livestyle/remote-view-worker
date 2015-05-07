@@ -4,33 +4,32 @@
 var http = require('http');
 var net = require('net');
 var through = require('through2');
-var httpParser = require('./lib/http-parser');
-
+var transformStream = require('./lib/transform-stream');
+var transformer = require('./lib/transformer');
 const CRLF = '\r\n';
 
 http.createServer(function(req, res) {
 	console.log('HTTP request');
-	console.log(createHTTPHeader(req));
+	var header = transformStream.createHTTPRequestHeader(req, {
+		'host': 'emmet.io',
+		'x-forwarded-proto': 'http',
+		'connection': 'close'
+	}); 
+	console.log(header);
 	var socket = net.connect({port: 9002}, function() {
-		socket.write(new Buffer(createHTTPHeader(req)));
+		socket.write(new Buffer(header));
 
-		var httpHeader = null;
-		var parser = httpParser.response(function(result) {
-			console.log('got parser result', result);
-			httpHeader = result;
-		});
-
-		req.pipe(socket).pipe(through(function(chunk, enc, next) {
-			if (!httpHeader) {
-				let ret = parser.execute(chunk);
-				// let ret2 = parser.execute(chunk.slice(100));
-				console.log('chunk is %d bytes', chunk.length);
-				console.log(chunk.toString());
-				// console.log('parser ret', ret, ret2);
-			}
-			next(null, chunk);
-		})).pipe(res.socket);
-
+		req.pipe(socket)
+		.pipe(transformStream(req, res))
+		.pipe(transformer(function(chunk, enc, next) {
+			var injected = new Buffer('injected');
+			chunk = new Buffer(chunk.toString().toUpperCase());
+			this.contentLength += injected.length;
+			this.push(injected);
+			this.push(chunk);
+			next();
+		}))
+		.pipe(res);
 	});
 }).listen(9001, function() {
 	console.log('Created HTTP server on 9001');
@@ -38,18 +37,8 @@ http.createServer(function(req, res) {
 
 http.createServer(function(req, res) {
 	console.log('Proxy request');
-	console.log(createHTTPHeader(req));
+	console.log(transformStream.createHTTPRequestHeader(req));
 	res.end('Proxy complete');
 }).listen(9002, function() {
 	console.log('Created socket server on 9002');
 });
-
-function createHTTPHeader(req) {
-	var lines = [req.method + ' ' + req.url + ' HTTP/' + req.httpVersion];
-	for (var i = 0; i < req.rawHeaders.length; i+=2) {
-		lines.push(req.rawHeaders[i] + ': ' + req.rawHeaders[i + 1]);
-	}
-
-	lines.push(CRLF);
-	return lines.join(CRLF);
-}
