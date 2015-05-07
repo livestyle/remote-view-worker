@@ -22,15 +22,14 @@ net.createServer(function(socket) {
 	debug('Created reverse tunnel server');
 });
 
-
 // http server
-net.createServer(function(socket) {
+http.createServer(function(req, res) {
 	debug('got HTTP request');
-	var s = session(socket);
+	var s = session(req);
 	if (s) {
-		s.redirect(socket);
+		s.redirect(req, res);
 	} else {
-		errorResponse(socket, 'no-session');
+		errorResponse(res, 'no-session');
 	}
 }).listen(9002, function() {
 	debug('Created HTTP server');
