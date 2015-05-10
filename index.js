@@ -9,7 +9,6 @@ var errorResponse = require('./lib/error-response');
 
 // reverse tunner server
 net.createServer(function(socket) {
-	debug('socket connected');
 	var session = manager.getSession(socket);
 	if (session) {
 		session.addSocket(socket);
@@ -24,7 +23,7 @@ net.createServer(function(socket) {
 
 // http server
 http.createServer(function(req, res) {
-	debug('got HTTP request');
+	debug('got HTTP request for %s', req.url);
 	var session = manager.getSession(req);
 	if (session) {
 		session.redirect(req, res);
