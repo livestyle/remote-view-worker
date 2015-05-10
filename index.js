@@ -31,6 +31,17 @@ http.createServer(function(req, res) {
 	} else {
 		errorResponse(res, 'no-session');
 	}
-}).listen(9002, function() {
+})
+.on('upgrade', function(req, socket, head) {
+	debug('got WebSocket request');
+	var session = manager.getSession(req);
+	if (session) {
+		session.redirect(req, socket, head);
+	} else {
+		// TODO have to check if this really closes connection
+		req.emit('close');
+	}
+})
+.listen(9002, function() {
 	debug('Created HTTP server');
 });
