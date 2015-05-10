@@ -1,4 +1,4 @@
-#!/usr/bin/env iojs --es-staging --harmony_arrow_functions
+#!/usr/bin/env iojs
 'use strict'
 
 var net = require('net');
