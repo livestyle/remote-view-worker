@@ -16,7 +16,9 @@
     "xtend": "^4.0.0"
   },
   "devDependencies": {
+    "connect": "^3.3.5",
     "mocha": "^2.2.4",
-    "node-static": "^0.7.6"
+    "request": "^2.55.0",
+    "serve-static": "^1.9.2"
   }
 }
