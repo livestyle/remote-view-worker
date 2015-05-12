@@ -3,23 +3,38 @@
  */
 'use strict'
 
+var fs = require('fs');
 var path = require('path');
 var connect = require('connect');
 var serveStatic = require('serve-static');
 var basicAuth = require('basic-auth-connect');
+var bodyParser = require('body-parser');
+var multipart = require('connect-multiparty');
 
 module.exports = function(options) {
 	var app = connect();
-	app.use(serveStatic(options.docroot))
+	app.use(serveStatic(options.docroot));
+	app.use(bodyParser.urlencoded({extended: true}));
+
+	// for testing HTTP basic auth requests
 	app.use('/auth', basicAuth('admin', 'password'));
 	app.use('/auth', function(req, res, next) {
-		res.writeHead(200, {
-			'content-type': 'text/plain'
-		});
 		var parts = req.headers.authorization.split(' ');
 		var credentials = new Buffer(parts[1], 'base64').toString();
+		plain(res, 'Authorized as ' + credentials);
+	});
 
-		res.end('Authorized as ' + credentials);
+	// for testing POST data fields
+	app.use('/post', function(req, res, next) {
+		plain(res, 'Posted ' + JSON.stringify(req.body));
+	});
+
+	// for testing file uploads
+	app.use('/upload', multipart());
+	app.use('/upload', function(req, res) {
+		var file = req.files.file;
+		plain(res, `Uploaded file: ${file.name} (${file.size} bytes)`);
+		fs.unlinkSync(file.path); // cleanup
 	});
 
 	var server = app.listen(options.port);
@@ -30,6 +45,13 @@ module.exports = function(options) {
 		}
 	};
 };
+
+function plain(res, text) {
+	res.writeHead(200, {
+		'content-type': 'text/plain'
+	});
+	res.end(text);
+}
 
 if (require.main === module) {
 	module.exports({

@@ -17,7 +17,9 @@
   },
   "devDependencies": {
     "basic-auth-connect": "^1.0.0",
+    "body-parser": "^1.12.4",
     "connect": "^3.3.5",
+    "connect-multiparty": "^1.2.5",
     "mocha": "^2.2.4",
     "request": "^2.55.0",
     "serve-static": "^1.9.2"

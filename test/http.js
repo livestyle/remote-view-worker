@@ -1,5 +1,6 @@
 'use strict'
 
+var fs = require('fs');
 var path = require('path');
 var assert = require('assert');
 var request = require('request');
@@ -13,7 +14,7 @@ var httpServerPort = 9002;
 var localServerPort = 9010;
 var nextTick = process.nextTick;
 
-describe.only('HTTP Tunnel', function() {
+describe('HTTP Tunnel', function() {
 	var local, rv;
 	var session = new Session({
 		"socketId": "test",
@@ -23,6 +24,14 @@ describe.only('HTTP Tunnel', function() {
 	});
 	var connect = function(callback) {
 		return tunnel(reverseTunnelPort, callback);
+	};
+	var noSocketLeak = function(socket, callback) {
+		// make sure socket connection is not leaked
+		setTimeout(function() {
+			assert.equal(session.sockets.length, 0);
+			assert(socket.destroyed);
+			callback();
+		}, 20);
 	};
 	
 	before(function() {
@@ -56,13 +65,7 @@ describe.only('HTTP Tunnel', function() {
 			assert.equal(res.statusCode, 200);
 			assert(res.headers['content-type'].indexOf('text/html') !== -1);
 			assert(body.indexOf('Sample index file') !== -1);
-
-			setTimeout(function() {
-				// make sure socket connection is not leaked
-				assert.equal(session.sockets.length, 0);
-				assert(socket.destroyed);
-				done();
-			}, 20);
+			noSocketLeak(socket, done);
 		});
 	});
 
@@ -77,13 +80,72 @@ describe.only('HTTP Tunnel', function() {
 			assert(res.headers['content-type'].indexOf('text/html') !== -1);
 			// body must be empty because this is HEAD request
 			assert(!body);
+			noSocketLeak(socket, done);
+		});
+	});
 
-			setTimeout(function() {
-				// make sure socket connection is not leaked
-				assert.equal(session.sockets.length, 0);
-				assert(socket.destroyed);
-				done();
-			}, 20);
+	it('post', function(done) {
+		var socket = connect();
+		request.post({
+			url: 'http://localhost:9002/post',
+			form: {
+				foo: 'bar',
+				one: 1,
+				text: 'Hello world'
+			}
+		}, function(err, res, body) {
+			assert(!err);
+			assert.equal(res.statusCode, 200);
+			assert(res.headers['content-type'].indexOf('text/plain') !== -1);
+			assert.equal(body, 'Posted {"foo":"bar","one":"1","text":"Hello world"}');
+			noSocketLeak(socket, done);
+		});
+	});
+
+	it('post multipart', function(done) {
+		var socket = connect();
+		var filePath = path.join(path.join(__dirname, 'assets/image.png'));
+		var stat = fs.statSync(filePath);
+		request.post({
+			url: 'http://localhost:9002/upload',
+			formData: {
+				file: {
+					value: fs.createReadStream(filePath),
+					options: {
+						filename: path.basename(filePath),
+						contentType: 'image/png'
+					}
+				}
+			}
+		}, function(err, res, body) {
+			assert(!err);
+			assert.equal(res.statusCode, 200);
+			assert(res.headers['content-type'].indexOf('text/plain') !== -1);
+			assert.equal(body, `Uploaded file: ${path.basename(filePath)} (${stat.size} bytes)`);
+			noSocketLeak(socket, done);
+		});
+	});
+
+	it('post multipart (10 MB)', function(done) {
+		var socket = connect();
+		var data = require('crypto').pseudoRandomBytes(1024 * 1024 * 10);
+		request.post({
+			url: 'http://localhost:9002/upload',
+			formData: {
+				file: {
+					value: data,
+					options: {
+						filename: 'large.bin',
+						contentType: 'application/octet-stream'
+					}
+				}
+			}
+		}, function(err, res, body) {
+			assert(!err);
+			assert.equal(res.statusCode, 200);
+			assert(res.headers['content-type'].indexOf('text/plain') !== -1);
+			assert.equal(body, `Uploaded file: large.bin (${data.length} bytes)`);
+			noSocketLeak(socket, done);
 		});
 	});
 
@@ -112,7 +174,7 @@ describe.only('HTTP Tunnel', function() {
 			});
 		});
 
-		it.only('right credentials', function(done) {
+		it('right credentials', function(done) {
 			connect();
 			request({
 				url: 'http://localhost:9002/auth',
