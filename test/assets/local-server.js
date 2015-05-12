@@ -37,6 +37,16 @@ module.exports = function(options) {
 		fs.unlinkSync(file.path); // cleanup
 	});
 
+	// gzip output
+	app.use('/compressed', function(req, res) {
+		var file = path.join(options.docroot, 'compressed.html.gz');
+		res.writeHead(200, {
+			'Content-Type': 'text/html',
+			'Content-Encoding': 'gzip'
+		});
+		fs.createReadStream(file).pipe(res);
+	});
+
 	var server = app.listen(options.port);
 
 	return {
