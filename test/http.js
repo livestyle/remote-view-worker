@@ -11,6 +11,7 @@ var localServer = require('./assets/local-server');
 var reverseTunnelPort = 9001;
 var httpServerPort = 9002;
 var localServerPort = 9010;
+var nextTick = process.nextTick;
 
 describe.only('HTTP Tunnel', function() {
 	var local, rv;
@@ -21,7 +22,7 @@ describe.only('HTTP Tunnel', function() {
 		"maxConnections": 2
 	});
 	var connect = function(callback) {
-		tunnel(reverseTunnelPort, callback);
+		return tunnel(reverseTunnelPort, callback);
 	};
 	
 	before(function() {
@@ -48,13 +49,22 @@ describe.only('HTTP Tunnel', function() {
 		rv.stop();
 	});
 
-	it('simple request', function(done) {
-		connect(function(socket) {
-			request('http://localhost:9002', function(err, res, body) {
-				console.log('body:', body);
-				socket.destroy();
+	it('get', function(done) {
+		var socket = connect();
+		request('http://localhost:9002', function(err, res, body) {
+			assert(!err);
+			assert.equal(res.statusCode, 200);
+			assert(res.headers['content-type'].indexOf('text/html') !== -1);
+			assert(body.indexOf('Sample index file') !== -1);
+
+			setTimeout(function() {
+				// make sure socket connection is not leaked
+				assert.equal(session.sockets.length, 0);
+				assert(socket.destroyed);
 				done();
-			});
+			}, 20);
 		});
 	});
+
+
 });
