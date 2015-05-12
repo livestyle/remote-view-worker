@@ -66,5 +66,67 @@ describe.only('HTTP Tunnel', function() {
 		});
 	});
 
+	it('head', function(done) {
+		var socket = connect();
+		request({
+			url: 'http://localhost:9002',
+			method: 'HEAD'
+		}, function(err, res, body) {
+			assert(!err);
+			assert.equal(res.statusCode, 200);
+			assert(res.headers['content-type'].indexOf('text/html') !== -1);
+			// body must be empty because this is HEAD request
+			assert(!body);
+
+			setTimeout(function() {
+				// make sure socket connection is not leaked
+				assert.equal(session.sockets.length, 0);
+				assert(socket.destroyed);
+				done();
+			}, 20);
+		});
+	});
+
+	describe('Auth', function() {
+		it('no credentials', function(done) {
+			connect();
+			request('http://localhost:9002/auth', function(err, res, body) {
+				assert(!err);
+				assert.equal(res.statusCode, 401);
+				done();
+			});
+		});
+
+		it('wrong credentials', function(done) {
+			connect();
+			request({
+				url: 'http://localhost:9002/auth',
+				auth: {
+					'user': 'foo',
+					'password': 'bar'
+				}
+			}, function(err, res, body) {
+				assert(!err);
+				assert.equal(res.statusCode, 401);
+				done();
+			});
+		});
+
+		it.only('right credentials', function(done) {
+			connect();
+			request({
+				url: 'http://localhost:9002/auth',
+				auth: {
+					'user': 'admin',
+					'password': 'password'
+				}
+			}, function(err, res, body) {
+				assert(!err);
+				assert.equal(res.statusCode, 200);
+				assert.equal(body, 'Authorized as admin:password');
+				done();
+			});
+		});
+	});
 
 });
