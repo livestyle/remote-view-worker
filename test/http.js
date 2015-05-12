@@ -12,7 +12,7 @@ var reverseTunnelPort = 9001;
 var httpServerPort = 9002;
 var localServerPort = 9010;
 
-describe('HTTP Tunnel', function() {
+describe.only('HTTP Tunnel', function() {
 	var local, rv;
 	var session = new Session({
 		"socketId": "test",
@@ -20,10 +20,8 @@ describe('HTTP Tunnel', function() {
 		"localSite": "http://localhost:9010",
 		"maxConnections": 2
 	});
-	var connect = function() {
-		var socket = tunnel(reverseTunnelPort);
-		session.addSocket(socket);
-		return socket;
+	var connect = function(callback) {
+		tunnel(reverseTunnelPort, callback);
 	};
 	
 	before(function() {
@@ -51,11 +49,12 @@ describe('HTTP Tunnel', function() {
 	});
 
 	it('simple request', function(done) {
-		var socket = connect();
-		request('http://localhost:9010', function(err, res, body) {
-			console.log('body:', body);
-			socket.destroy();
-			done();
+		connect(function(socket) {
+			request('http://localhost:9002', function(err, res, body) {
+				console.log('body:', body);
+				socket.destroy();
+				done();
+			});
 		});
 	});
 });
