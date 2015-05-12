@@ -12,12 +12,11 @@ var localServer = require('./assets/local-server');
 var reverseTunnelPort = 9001;
 var httpServerPort = 9002;
 var localServerPort = 9010;
-var nextTick = process.nextTick;
 
 describe('HTTP Tunnel', function() {
 	var local, rv;
 	var session = new Session({
-		"socketId": "test",
+		"sessionId": "test",
 		"remoteSiteId": "rv",
 		"localSite": "http://localhost:9010",
 		"maxConnections": 2
