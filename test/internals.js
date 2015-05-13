@@ -3,61 +3,23 @@
 var path = require('path');
 var assert = require('assert');
 var request = require('request');
-var rvServer = require('../lib/server');
-var Session = require('../lib/session');
-var tunnel = require('./assets/tunnel');
-var localServer = require('./assets/local-server');
+var env = require('./assets/test-setup');
 
-var reverseTunnelPort = 9001;
-var httpServerPort = 9002;
-var localServerPort = 9010;
 var nextTick = process.nextTick;
 
 describe('Internals', function() {
-	var local, rv;
-	var session = new Session({
-		"sessionId": "test",
-		"remoteSiteId": "rv",
-		"localSite": "http://localhost:9010",
-		"maxConnections": 2
-	}, {
-		maxQueue: 2,
-		socketWaitTimeout: 500
-	});
-	var sessionManager = {
-		getSession(req) {
-			return this.empty ? null : session;
-		},
-		empty: false
-	};
-	var connect = function(callback) {
-		return tunnel(reverseTunnelPort, callback);
-	};
-
-	before(function() {
-		// fake local web-server
-		local = localServer({
-			docroot: path.join(__dirname, 'assets'),
-			port: localServerPort
-		});
-
-		// RV worker instance
-		rv = rvServer({
-			reverseTunnelPort: reverseTunnelPort,
-			httpServerPort: httpServerPort,
-			sessionManager: sessionManager
-		});
-	});
-
-	after(function() {
-		local.stop();
-		rv.stop();
-	});
+	before(env.before.bind(env, {
+		sessionOpt: {
+			maxQueue: 2,
+			socketWaitTimeout: 500
+		}
+	}));
+	after(env.after);
 
 	it('max connections', function(done) {
 		var complete = function() {
 			// redundant socket must be destroyed as soon as it was connected
-			assert.equal(session.sockets.length, session.data.maxConnections);
+			assert.equal(env.session.sockets.length, env.session.data.maxConnections);
 			assert(this.destroyed);
 
 			// clean-up
@@ -66,9 +28,9 @@ describe('Internals', function() {
 			s3.removeListener('close', complete).destroy();
 			done();
 		};
-		var s1 = connect().once('close', complete);
-		var s2 = connect().once('close', complete);
-		var s3 = connect().once('close', complete);
+		var s1 = env.connect().once('close', complete);
+		var s2 = env.connect().once('close', complete);
+		var s3 = env.connect().once('close', complete);
 	});
 
 	it('pending requests', function(done) {
@@ -76,8 +38,8 @@ describe('Internals', function() {
 		// the second request must be queued until 
 		// next socket is available
 		var code1, body1;
-		connect();
-		setTimeout(connect, 300);
+		env.connect();
+		setTimeout(env.connect, 300);
 
 		request('http://localhost:9002/', function(err, res, body) {
 			assert(!err);
@@ -90,7 +52,7 @@ describe('Internals', function() {
 				assert(body.indexOf('Sample index file') !== -1);
 
 				nextTick(function() {
-					assert.equal(session.sockets.length, 0);
+					assert.equal(env.session.sockets.length, 0);
 					done();
 				});
 			});
@@ -127,9 +89,9 @@ describe('Internals', function() {
 	});
 
 	it('no session', function(done) {
-		sessionManager.empty = true;
+		env.sessionManager.empty = true;
 		request('http://localhost:9002', function(err, res, body) {
-			sessionManager.empty = false;
+			env.sessionManager.empty = false;
 			assert.equal(res.statusCode, 403);
 			done();
 		});
@@ -149,7 +111,7 @@ describe('Internals', function() {
 		});
 
 		setTimeout(function() {
-			session.destroy();
+			env.session.destroy();
 		}, 200);
 	});
 });

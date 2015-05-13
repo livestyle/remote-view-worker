@@ -6,8 +6,8 @@ var assert = require('assert');
 var request = require('request');
 var env = require('./assets/test-setup');
 
-describe('HTTP Tunnel', function() {
-	before(env.before);
+describe('HTTPS Tunnel', function() {
+	before(env.before.bind(env, {ssl: true}));
 	after(env.after);
 
 	it('get', function(done) {

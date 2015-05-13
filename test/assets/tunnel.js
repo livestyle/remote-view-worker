@@ -4,6 +4,7 @@
 'use strict'
 
 var net = require('net');
+var tls = require('tls');
 var through = require('through2');
 var combine = require('stream-combiner2');
 
@@ -21,7 +22,9 @@ module.exports = function(port, callback) {
 				buf = Buffer.concat([buf, chunk]);
 				let ix = buf.indexOf(HEADER_SEP);
 				if (ix !== -1) {
-					remote = net.connect(getHost(buf.slice(0, ix)), function() {
+					let protocol = getProtocol(buf.slice(0, ix));
+					let transport = getProtocol(buf.slice(0, ix)) === 'https' ? tls : net;
+					remote = transport.connect(getHost(buf.slice(0, ix)), function() {
 						next(null, buf);
 						buf = null;
 					});
@@ -43,6 +46,11 @@ module.exports = function(port, callback) {
 	return socket;
 };
 
+function getProtocol(buf) {
+	var m = buf.toString().match(/\bx\-forwarded\-proto:\s*(\w+)/i);
+	return m ? m[1].toLowerCase() : 'http';
+}
+
 function getHost(buf) {
 	var hostname = null;
 	buf.toString().split(CRLF).some(function(line) {
@@ -53,7 +61,8 @@ function getHost(buf) {
 		var parts = hostname.split(':');
 		return {
 			host: parts.shift(),
-			port: parts[0] || 80
+			port: parts[0] || 80,
+			rejectUnauthorized: false
 		};
 	}
 }

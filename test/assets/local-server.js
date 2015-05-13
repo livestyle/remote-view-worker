@@ -1,3 +1,4 @@
+#!/usr/bin/env iojs
 /**
  * A simple local server implementation for testing
  */
@@ -5,6 +6,8 @@
 
 var fs = require('fs');
 var path = require('path');
+var http = require('http');
+var https = require('https');
 var connect = require('connect');
 var serveStatic = require('serve-static');
 var basicAuth = require('basic-auth-connect');
@@ -47,11 +50,23 @@ module.exports = function(options) {
 		fs.createReadStream(file).pipe(res);
 	});
 
-	var server = app.listen(options.port);
+
+	var httpServer, httpsServer;
+	if (options.port) {
+		httpServer = http.createServer(app).listen(options.port);
+	}
+	
+	if (options.sslPort) {
+		httpsServer = https.createServer({
+			key: fs.readFileSync( path.resolve(__dirname, '../cert/server.key') ),
+			cert: fs.readFileSync( path.resolve(__dirname, '../cert/server.crt') )
+		}, app).listen(options.sslPort);
+	}
 
 	return {
 		stop() {
-			server.close();
+			httpServer && httpServer.close();
+			httpsServer && httpsServer.close();
 		}
 	};
 };
@@ -65,9 +80,10 @@ function plain(res, text) {
 
 if (require.main === module) {
 	module.exports({
-		docroot: path.resolve(__dirname, '../assets'),
-		port: 9010
+		docroot: __dirname,
+		port: 9010,
+		sslPort: 9443
 	});
 
-	console.log('Started sample server on :9010');
+	console.log('Started http server on :9010 and https server of :9443');
 }
