@@ -13,6 +13,7 @@ var serveStatic = require('serve-static');
 var basicAuth = require('basic-auth-connect');
 var bodyParser = require('body-parser');
 var multipart = require('connect-multiparty');
+var ws = require('websocket');
 
 module.exports = function(options) {
 	var app = connect();
@@ -51,9 +52,20 @@ module.exports = function(options) {
 	});
 
 
-	var httpServer, httpsServer;
+	var httpServer, httpsServer, wsServer;
 	if (options.port) {
 		httpServer = http.createServer(app).listen(options.port);
+		wsServer = new ws.server({
+			httpServer: httpServer,
+			autoAcceptConnections: true
+		});
+		wsServer.on('connect', function(client) {
+			client.on('message', function(msg) {
+				if (msg.utf8Data === 'ping') {
+					client.send('pong');
+				}
+			});
+		});
 	}
 	
 	if (options.sslPort) {
@@ -65,6 +77,7 @@ module.exports = function(options) {
 
 	return {
 		stop() {
+			wsServer && wsServer.shutDown();
 			httpServer && httpServer.close();
 			httpsServer && httpsServer.close();
 		}

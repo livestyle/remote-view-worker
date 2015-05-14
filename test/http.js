@@ -56,7 +56,7 @@ describe('HTTP Tunnel', function() {
 
 	it('post multipart', function(done) {
 		var socket = env.connect();
-		var filePath = path.join(path.join(__dirname, 'assets/image.png'));
+		var filePath = path.join(__dirname, 'assets/image.png');
 		var stat = fs.statSync(filePath);
 		request.post({
 			url: 'http://localhost:9002/upload',
