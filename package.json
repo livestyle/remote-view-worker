@@ -21,6 +21,7 @@
     "connect": "^3.3.5",
     "connect-multiparty": "^1.2.5",
     "mocha": "^2.2.4",
+    "remote-view-client": "git+https://github.com/livestyle/remote-view-client.git",
     "request": "^2.55.0",
     "serve-static": "^1.9.2",
     "websocket": "^1.0.18"

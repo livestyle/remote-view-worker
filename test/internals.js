@@ -20,7 +20,7 @@ describe('Internals', function() {
 		var complete = function() {
 			// redundant socket must be destroyed as soon as it was connected
 			assert.equal(env.session.sockets.length, env.session.data.maxConnections);
-			assert(this.destroyed);
+			assert(this.socket.destroyed);
 
 			// clean-up
 			s1.removeListener('close', complete).destroy();

@@ -2,8 +2,8 @@
 
 var assert = require('assert');
 var extend = require('xtend');
+var Tunnel = require('remote-view-client/lib/tunnel');
 var localServer = require('./local-server');
-var tunnel = require('./tunnel');
 var rvServer = require('../../lib/server');
 var Session = require('../../lib/session');
 
@@ -56,7 +56,7 @@ module.exports = {
 	},
 	connect(callback) {
 		var self = module.exports;
-		return tunnel(self.options.reverseTunnelPort, callback);
+		return new Tunnel(self.options.reverseTunnelPort, callback);
 	},
 	noSocketLeak(socket, callback) {
 		var self = module.exports;
