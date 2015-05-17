@@ -20,17 +20,16 @@ describe('Internals', function() {
 		var complete = function() {
 			// redundant socket must be destroyed as soon as it was connected
 			assert.equal(env.session.sockets.length, env.session.data.maxConnections);
-			assert(this.socket.destroyed);
 
 			// clean-up
-			s1.removeListener('close', complete).destroy();
-			s2.removeListener('close', complete).destroy();
-			s3.removeListener('close', complete).destroy();
+			s1.removeListener('destroy', complete).destroy();
+			s2.removeListener('destroy', complete).destroy();
+			s3.removeListener('destroy', complete).destroy();
 			done();
 		};
-		var s1 = env.connect().once('close', complete);
-		var s2 = env.connect().once('close', complete);
-		var s3 = env.connect().once('close', complete);
+		var s1 = env.connect().once('destroy', complete);
+		var s2 = env.connect().once('destroy', complete);
+		var s3 = env.connect().once('destroy', complete);
 	});
 
 	it('pending requests', function(done) {
@@ -60,7 +59,7 @@ describe('Internals', function() {
 	});
 
 	it('request queue', function(done) {
-		// allow only `maxQueue` HTTP request, 
+		// allow only `maxQueue` amount of HTTP requests, 
 		// close extra requests with error
 		var requests = 3;
 		var responses = 0;
