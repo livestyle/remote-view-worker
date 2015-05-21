@@ -16,21 +16,22 @@ describe.only('Internals', function() {
 	}));
 	after(env.after);
 
-	it('max connections', function(done) {
-		var complete = function() {
-			// redundant socket must be destroyed as soon as it was connected
-			assert.equal(env.session.sockets.length, env.session.data.maxConnections);
+	// it('max connections', function(done) {
+	// 	var complete = function() {
+	// 		// redundant socket must be destroyed as soon as it was connected
+	// 		assert.equal(env.session.sockets.length, env.session.data.maxConnections);
 
-			// clean-up
-			s1.removeListener('destroy', complete).destroy();
-			s2.removeListener('destroy', complete).destroy();
-			s3.removeListener('destroy', complete).destroy();
-			done();
-		};
-		var s1 = env.connect().once('destroy', complete);
-		var s2 = env.connect().once('destroy', complete);
-		var s3 = env.connect().once('destroy', complete);
-	});
+	// 		// clean-up
+	// 		s1.removeListener('destroy', complete).destroy();
+	// 		s2.removeListener('destroy', complete).destroy();
+	// 		s3.removeListener('destroy', complete).destroy();
+	// 		// setTimeout(done, 1000);
+	// 		done();
+	// 	};
+	// 	var s1 = env.connect().once('destroy', complete);
+	// 	var s2 = env.connect().once('destroy', complete);
+	// 	var s3 = env.connect().once('destroy', complete);
+	// });
 
 	it('pending requests', function(done) {
 		// connect only one socket but make two requests:
@@ -43,6 +44,7 @@ describe.only('Internals', function() {
 		request('http://localhost:9002/', function(err, res, body) {
 			assert(!err);
 			assert.equal(res.statusCode, 200);
+			console.log(res.statusMessage);
 			console.log(res.headers);
 			console.log('body\n%s', body);
 			assert(body.indexOf('Sample index file') !== -1);
@@ -60,7 +62,7 @@ describe.only('Internals', function() {
 		});
 	});
 
-	it('request queue', function(done) {
+	it.skip('request queue', function(done) {
 		// allow only `maxQueue` amount of HTTP requests, 
 		// close extra requests with error
 		var requests = 3;
@@ -89,7 +91,7 @@ describe.only('Internals', function() {
 		}
 	});
 
-	it('no session', function(done) {
+	it.skip('no session', function(done) {
 		env.sessionManager.empty = true;
 		request('http://localhost:9002', function(err, res, body) {
 			env.sessionManager.empty = false;
@@ -98,7 +100,7 @@ describe.only('Internals', function() {
 		});
 	});
 
-	it('destroy session', function(done) {
+	it.skip('destroy session', function(done) {
 		// when session is destroyed, all pending requests
 		// must return with error, no more connections can be added
 		request('http://localhost:9002', function(err, res, body) {
