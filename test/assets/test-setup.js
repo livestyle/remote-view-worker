@@ -9,6 +9,7 @@ var Session = require('../../lib/session');
 
 var defaultOptions = {
 	docroot: __dirname,
+	sessionId: 'test',
 	reverseTunnelPort: 9001,
 	httpServerPort: 9002,
 	localServerPort: 9010,
@@ -56,7 +57,7 @@ module.exports = {
 	},
 	connect(callback) {
 		var self = module.exports;
-		return new Tunnel(self.options.reverseTunnelPort, callback);
+		return new Tunnel(self.options.reverseTunnelPort, self.options.sessionId, callback);
 	},
 	noSocketLeak(socket, callback) {
 		var self = module.exports;

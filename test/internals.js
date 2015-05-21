@@ -7,7 +7,7 @@ var env = require('./assets/test-setup');
 
 var nextTick = process.nextTick;
 
-describe('Internals', function() {
+describe.only('Internals', function() {
 	before(env.before.bind(env, {
 		sessionOpt: {
 			maxQueue: 2,
@@ -43,9 +43,11 @@ describe('Internals', function() {
 		request('http://localhost:9002/', function(err, res, body) {
 			assert(!err);
 			assert.equal(res.statusCode, 200);
+			console.log(res.headers);
+			console.log('body\n%s', body);
 			assert(body.indexOf('Sample index file') !== -1);
 
-			request('http://localhost:9002/', function(err, res, body) {
+			request('http://localhost:9002/index.html', function(err, res, body) {
 				assert(!err);
 				assert.equal(res.statusCode, 200);
 				assert(body.indexOf('Sample index file') !== -1);
