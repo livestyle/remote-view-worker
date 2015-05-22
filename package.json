@@ -4,7 +4,7 @@
   "description": "LiveStyle Remote View server worker: handles connectivity with RV clients",
   "main": "index.js",
   "scripts": {
-    "test": "iojs ./node_modules/.bin/mocha --reporter spec"
+    "test": "iojs ./node_modules/.bin/mocha -t 10000 --reporter spec"
   },
   "author": "Sergey Chikuyonok",
   "license": "MIT",
