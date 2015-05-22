@@ -24,7 +24,7 @@ describe('WebSockets', function() {
 			connection.send('ping');
 			connection.send('ping');
 		});
-		client.connect('ws://localhost:9002/');
+		client.connect('ws://localhost:9001/');
 
 	});
 });

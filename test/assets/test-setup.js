@@ -2,7 +2,7 @@
 
 var assert = require('assert');
 var extend = require('xtend');
-var Tunnel = require('remote-view-client/lib/tunnel');
+var Tunnel = require('remote-view-client').Tunnel;
 var localServer = require('./local-server');
 var rvServer = require('../../lib/server');
 var Session = require('../../lib/session');
@@ -11,8 +11,7 @@ var defaultOptions = {
 	docroot: __dirname,
 	sessionId: 'test',
 	reverseTunnelPort: 9001,
-	httpServerPort: 9002,
-	localServerPort: 9010,
+	localServerPort: 9999,
 	maxConnections: 2,
 	ssl: false
 };
@@ -45,19 +44,28 @@ module.exports = {
 
 		// RV worker instance
 		self.rv = rvServer({
-			reverseTunnelPort: options.reverseTunnelPort,
-			httpServerPort: options.httpServerPort,
+			port: options.reverseTunnelPort,
 			sessionManager: self.sessionManager
 		});
 	},
 	after() {
 		var self = module.exports;
-		self.local.stop();
-		self.rv.stop();
+		self.rv.close(function() {
+			self.local.stop();
+		});
 	},
-	connect(callback) {
+	connect(url, callback) {
 		var self = module.exports;
-		return new Tunnel(self.options.reverseTunnelPort, self.options.sessionId, callback);
+		if (typeof url === 'function') {
+			callback = url;
+			url = null;
+		}
+
+		if (!url) {
+			url = `http://localhost:${self.options.reverseTunnelPort}/session-test`;
+		}
+
+		return new Tunnel(url, self.options.sessionId, callback);
 	},
 	noSocketLeak(socket, callback) {
 		var self = module.exports;

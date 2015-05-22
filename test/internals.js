@@ -7,7 +7,7 @@ var env = require('./assets/test-setup');
 
 var nextTick = process.nextTick;
 
-describe.only('Internals', function() {
+describe('Internals', function() {
 	before(env.before.bind(env, {
 		sessionOpt: {
 			maxQueue: 2,
@@ -16,45 +16,42 @@ describe.only('Internals', function() {
 	}));
 	after(env.after);
 
-	// it('max connections', function(done) {
-	// 	var complete = function() {
-	// 		// redundant socket must be destroyed as soon as it was connected
-	// 		assert.equal(env.session.sockets.length, env.session.data.maxConnections);
+	it('max connections', function(done) {
+		var complete = function() {
+			// redundant socket must be destroyed as soon as it was connected
+			assert.equal(env.session.sockets.length, env.session.data.maxConnections);
 
-	// 		// clean-up
-	// 		s1.removeListener('destroy', complete).destroy();
-	// 		s2.removeListener('destroy', complete).destroy();
-	// 		s3.removeListener('destroy', complete).destroy();
-	// 		// setTimeout(done, 1000);
-	// 		done();
-	// 	};
-	// 	var s1 = env.connect().once('destroy', complete);
-	// 	var s2 = env.connect().once('destroy', complete);
-	// 	var s3 = env.connect().once('destroy', complete);
-	// });
+			// clean-up
+			s1.removeListener('destroy', complete).destroy();
+			s2.removeListener('destroy', complete).destroy();
+			s3.removeListener('destroy', complete).destroy();
+			// setTimeout(done, 1000);
+			done();
+		};
+		var s1 = env.connect().once('destroy', complete);
+		var s2 = env.connect().once('destroy', complete);
+		var s3 = env.connect().once('destroy', complete);
+	});
 
 	it('pending requests', function(done) {
 		// connect only one socket but make two requests:
 		// the second request must be queued until 
 		// next socket is available
-		var code1, body1;
 		env.connect();
-		setTimeout(env.connect, 300);
 
-		request('http://localhost:9002/', function(err, res, body) {
+		request('http://localhost:9001/', function(err, res, body) {
 			assert(!err);
 			assert.equal(res.statusCode, 200);
-			console.log(res.statusMessage);
-			console.log(res.headers);
-			console.log('body\n%s', body);
 			assert(body.indexOf('Sample index file') !== -1);
 
-			request('http://localhost:9002/index.html', function(err, res, body) {
+			setTimeout(env.connect, 300);
+
+			request('http://localhost:9001/index.html', function(err, res, body) {
 				assert(!err);
 				assert.equal(res.statusCode, 200);
 				assert(body.indexOf('Sample index file') !== -1);
 
-				nextTick(function() {
+				process.nextTick(function() {
 					assert.equal(env.session.sockets.length, 0);
 					done();
 				});
@@ -62,7 +59,7 @@ describe.only('Internals', function() {
 		});
 	});
 
-	it.skip('request queue', function(done) {
+	it('request queue', function(done) {
 		// allow only `maxQueue` amount of HTTP requests, 
 		// close extra requests with error
 		var requests = 3;
@@ -87,27 +84,27 @@ describe.only('Internals', function() {
 		};
 
 		for (var i = 0; i < requests; i++) {
-			request('http://localhost:9002/', complete);
+			request('http://localhost:9001/', complete);
 		}
 	});
 
-	it.skip('no session', function(done) {
+	it('no session', function(done) {
 		env.sessionManager.empty = true;
-		request('http://localhost:9002', function(err, res, body) {
+		request('http://localhost:9001', function(err, res, body) {
 			env.sessionManager.empty = false;
-			assert.equal(res.statusCode, 403);
+			assert.equal(res.statusCode, 412);
 			done();
 		});
 	});
 
-	it.skip('destroy session', function(done) {
+	it('destroy session', function(done) {
 		// when session is destroyed, all pending requests
 		// must return with error, no more connections can be added
-		request('http://localhost:9002', function(err, res, body) {
-			assert.equal(res.statusCode, 500);
+		request('http://localhost:9001', function(err, res, body) {
+			assert.equal(res.statusCode, 410);
 			assert.equal(body, 'User session is destroyed');
-			request('http://localhost:9002', function(err, res, body) {
-				assert.equal(res.statusCode, 500);
+			request('http://localhost:9001', function(err, res, body) {
+				assert.equal(res.statusCode, 410);
 				assert.equal(body, 'User session is destroyed');
 				done();
 			});
