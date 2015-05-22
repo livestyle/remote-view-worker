@@ -1,57 +1,48 @@
 'use strict';
 
-var http = require('http');
 var net = require('net');
-var urlUtils = require('url');
+var http = require('http');
+var parseUrl = require('url').parse;
+var debug = require('debug')('rv:test');
+var Tunnel = require('remote-view-client/lib/tunnel');
+var rv = require('./lib2/server');
+var Session = require('./lib2/session');
 
-var tunnel;
-
-var server = http.createServer(function(req, res) {
-	console.log('main connection');
-	res.writeHead(200, {'Content-Type': 'text/plain'});
-	res.end('okay');
-})
-.on('connect', function(req, socket, head) {
-	console.log('remote connect');
-	socket.write(
-		'HTTP/1.1 200 Connection Established\r\n' +
-		'X-RV-Host: http://www.google.com\r\n' +
-		'Proxy-agent: Node-Proxy\r\n' +
-		'\r\n'
-	);
-
-	setTimeout(function() {
-		console.log('making tunnel request');
-		socket.write('GET / HTTP/1.1\r\n' +
-			'Host: www.google.com\r\n' +
-			'Connection: close\r\n' +
-		'\r\n');
-		socket.on('data', function(chunk) {
-			console.log(chunk.toString());
-		});
-		socket.on('end', function() {
-			socket.end();
-			server.close();
-		});
-	}, 100);
+var _session = new Session({
+	"userId": "123",
+	"sessionId": "sess-test",
+	"remoteSiteId": "super-duper",
+	"localSite": "http://emmet.io",
+	"expiresAt": 1430258415646,
+	"maxConnections": 6,
+	"worker": "10.0.1.2"
 });
 
-server.listen(1337, function() {
-	console.log('making request');
-	http.request({
-		port: 1337,
-		hostname: '127.0.0.1',
-		method: 'CONNECT',
-		headers: {
-			'x-rv-host': 'http://www.google.com'
+var options = {
+	port: 1337, 
+	sessionManager: {
+		getSession() {
+			return _session;
 		}
-	})
-	.on('connect', function(res, socket, head) {
-		console.log('received connect');
+	}
+}
 
-		var url = urlUtils.parse(res.headers['x-rv-host']);
-		var tunnel = net.connect(url.port || 80, url.hostname, function() {
-			socket.pipe(tunnel).pipe(socket);
+rv(options, function(server) {
+	var tunnel = new Tunnel(`http://localhost:${options.port}/sess-test`, function() {
+		debug('created tunnel');
+	});
+
+	var url = parseUrl(`http://localhost:${options.port}/hello.txt`);
+	url.header = {connection: 'close'};
+
+	http.request(url, function(res) {
+		debug('got response %o', res.headers);
+		res.on('data', function(chunk) {
+			debug(chunk.toString());
+		});
+		res.on('end', function() {
+			debug('response end');
+			server.close();
 		});
 	}).end();
 });
