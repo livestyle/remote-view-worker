@@ -10,8 +10,10 @@ var nextTick = process.nextTick;
 describe('Internals', function() {
 	before(env.before.bind(env, {
 		sessionOpt: {
+			maxTunnels: 2,
 			maxQueue: 2,
-			socketWaitTimeout: 500
+			socketWaitTimeout: 500,
+			requestTimeout: 500
 		}
 	}));
 	after(env.after);
