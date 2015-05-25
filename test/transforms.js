@@ -22,10 +22,7 @@ describe('Response transformations', function() {
 
 	it('inject into compressed HTML', function(done) {
 		var socket = env.connect();
-		request({
-			url: 'http://localhost:9001/compressed',
-			gzip: true
-		}, function(err, res, body) {
+		request('http://localhost:9001/compressed', {gzip: true}, function(err, res, body) {
 			assert(!err);
 			assert.equal(res.statusCode, 200);
 			assert.equal(res.headers['content-encoding'], 'gzip'); 
@@ -36,10 +33,7 @@ describe('Response transformations', function() {
 
 	it('compress', function(done) {
 		var socket = env.connect();
-		request({
-			url: 'http://localhost:9001',
-			gzip: true
-		}, function(err, res, body) {
+		request('http://localhost:9001', {gzip: true}, function(err, res, body) {
 			assert(!err);
 			assert.equal(res.statusCode, 200);
 			assert.equal(res.headers['content-encoding'], 'gzip'); 

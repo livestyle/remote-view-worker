@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 
 var fs = require('fs');
 var path = require('path');
@@ -12,7 +12,7 @@ describe('HTTP Tunnel', function() {
 
 	it('get', function(done) {
 		var socket = env.connect();
-		request('http://localhost:9001', function(err, res, body) {
+		request('http://localhost:9001', {gzip: true}, function(err, res, body) {
 			assert(!err);
 			assert.equal(res.statusCode, 200);
 			assert(res.headers['content-type'].indexOf('text/html') !== -1);
