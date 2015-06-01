@@ -34,7 +34,7 @@ module.exports = {
 
 		self.sessionManager = {
 			getSession(req) {
-				return this.empty ? null : self.session;
+				return this.empty ? Promise.reject(null) : Promise.resolve(self.session);
 			},
 			empty: false
 		};
