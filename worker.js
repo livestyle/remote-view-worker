@@ -7,7 +7,7 @@ var sessionManager = require('./lib/session-manager');
 
 var mongoUrl = process.env.RV_MONGO_DB || 'mongodb://localhost:27017/rv';
 
-mongo.connect(function(err, db) {
+mongo.connect(mongoUrl, function(err, db) {
 	if (err) {
 		throw err;
 	}
@@ -21,5 +21,3 @@ mongo.connect(function(err, db) {
 		console.log('Remote View worker is up and running on %d', this.address().port);
 	});
 });
-
-

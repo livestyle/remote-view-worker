@@ -10,7 +10,6 @@ describe('WebSockets', function() {
 	after(env.after);
 
 	it('ping-pong', function(done) {
-		env.connect();
 		var client = new ws.client();
 		client.on('connect', function(connection) {
 			var resp = [];
@@ -18,13 +17,20 @@ describe('WebSockets', function() {
 				resp.push(message.utf8Data);
 				if (resp.length === 2) {
 					assert.deepEqual(resp, ['pong', 'pong']);
+					connection.drop();
 					done();
 				}
+			})
+			.on('close', function() {
+				console.log('connection closed');
 			});
 			connection.send('ping');
 			connection.send('ping');
-		});
-		client.connect('ws://localhost:9001/');
+		})
+		.on('connectFailed', done);
 
+		env.connect(function() {
+			client.connect('ws://localhost:9001/', null, null, {'X-RV-Host': 'rv.livestyle.io'});
+		});
 	});
 });

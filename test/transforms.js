@@ -2,7 +2,9 @@
 
 var path = require('path');
 var assert = require('assert');
-var request = require('request');
+var request = require('request').defaults({
+	headers: {'X-RV-Host': 'rv.livestyle.io'}
+});
 var env = require('./assets/test-setup');
 
 describe('Response transformations', function() {

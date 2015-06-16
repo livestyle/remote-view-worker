@@ -2,33 +2,40 @@
 
 var path = require('path');
 var assert = require('assert');
-var request = require('request');
+var request = require('request').defaults({
+	headers: {'X-RV-Host': 'rv.livestyle.io'}
+});
+var sessionManager = require('../lib/session-manager');
 var env = require('./assets/test-setup');
 
 var nextTick = process.nextTick;
 
 describe('Internals', function() {
-	before(env.before.bind(env, {
-		sessionOpt: {
-			maxTunnels: 2,
-			maxQueue: 2,
-			socketWaitTimeout: 500,
-			requestTimeout: 500
-		}
-	}));
+	before(function(done) {
+		env.before({
+			sessionOpt: {
+				maxTunnels: 2,
+				maxQueue: 2,
+				socketWaitTimeout: 500,
+				requestTimeout: 500
+			}
+		}, done);
+	});
 	after(env.after);
 
 	it('max connections', function(done) {
 		var complete = function() {
 			// redundant socket must be destroyed as soon as it was connected
-			assert.equal(env.session.sockets.length, env.session.data.maxConnections);
+			sessionManager.getSession('session-test').then(function(session) {
+				assert.equal(session.sockets.length, session.options.maxTunnels);
 
-			// clean-up
-			s1.removeListener('destroy', complete).destroy();
-			s2.removeListener('destroy', complete).destroy();
-			s3.removeListener('destroy', complete).destroy();
-			// setTimeout(done, 1000);
-			done();
+				// clean-up
+				s1.removeListener('destroy', complete).destroy();
+				s2.removeListener('destroy', complete).destroy();
+				s3.removeListener('destroy', complete).destroy();
+				
+				done();
+			}).then(null, done);
 		};
 		var s1 = env.connect().once('destroy', complete);
 		var s2 = env.connect().once('destroy', complete);
@@ -53,10 +60,10 @@ describe('Internals', function() {
 				assert.equal(res.statusCode, 200);
 				assert(body.indexOf('Sample index file') !== -1);
 
-				process.nextTick(function() {
-					assert.equal(env.session.sockets.length, 0);
+				sessionManager.getSession('session-test').then(function(session) {
+					assert.equal(session.sockets.length, 0);
 					done();
-				});
+				}).then(null, done);
 			});
 		});
 	});
@@ -70,7 +77,7 @@ describe('Internals', function() {
 		var complete = function(err, res, body) {
 			responses++;
 			if (res.statusCode in codes) {
-				codes[res.statusCode]++
+				codes[res.statusCode]++;
 			} else {
 				codes[res.statusCode] = 1;
 			}
@@ -85,15 +92,18 @@ describe('Internals', function() {
 			}
 		};
 
-		for (var i = 0; i < requests; i++) {
-			request('http://localhost:9001/', complete);
-		}
+		// make initial tunnel connection to indicate that session is active
+		var tunnel = env.connect(function() {
+			tunnel.destroy();
+		}).once('destroy', function() {
+			for (var i = 0; i < requests; i++) {
+				request('http://localhost:9001/', complete);
+			}
+		});
 	});
 
 	it('no session', function(done) {
-		env.sessionManager.empty = true;
-		request('http://localhost:9001', function(err, res, body) {
-			env.sessionManager.empty = false;
+		request('http://localhost:9001', {headers: {'X-RV-Host': 'not-exists.livestyle.io'}}, function(err, res, body) {
 			assert.equal(res.statusCode, 412);
 			done();
 		});
@@ -102,18 +112,23 @@ describe('Internals', function() {
 	it('destroy session', function(done) {
 		// when session is destroyed, all pending requests
 		// must return with error, no more connections can be added
-		request('http://localhost:9001', function(err, res, body) {
-			assert.equal(res.statusCode, 410);
-			assert.equal(body, 'User session is destroyed');
+		// make initial tunnel connection to indicate that session is active
+		var tunnel = env.connect(function() {
+			tunnel.destroy();
+		}).once('destroy', function() {
 			request('http://localhost:9001', function(err, res, body) {
-				assert.equal(res.statusCode, 410);
-				assert.equal(body, 'User session is destroyed');
-				done();
+				assert.equal(res.statusCode, 412);
+				assert.equal(body, 'No Remote View session for given request');
+				request('http://localhost:9001', function(err, res, body) {
+					assert.equal(res.statusCode, 412);
+					assert.equal(body, 'No Remote View session for given request');
+					done();
+				});
 			});
 		});
 
-		setTimeout(function() {
-			env.session.destroy();
-		}, 200);
+		sessionManager.getSession('session-test').then(function(session) {
+			session.destroy();
+		}).then(null, done);
 	});
 });

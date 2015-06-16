@@ -3,16 +3,20 @@
 var fs = require('fs');
 var path = require('path');
 var assert = require('assert');
-var request = require('request');
+var request = require('request').defaults({
+	headers: {'X-RV-Host': 'rv.livestyle.io'}
+});
 var env = require('./assets/test-setup');
 
 describe('HTTPS Tunnel', function() {
-	before(env.before.bind(env, {ssl: true}));
+	before(function(done) {
+		env.before({ssl: true}, done);
+	});
 	after(env.after);
 
 	it('get', function(done) {
 		var socket = env.connect();
-		request('http://localhost:9001', function(err, res, body) {
+		request('http://localhost:9001', {gzip: true}, function(err, res, body) {
 			assert(!err);
 			assert.equal(res.statusCode, 200);
 			assert(res.headers['content-type'].indexOf('text/html') !== -1);
