@@ -17,13 +17,10 @@ describe('WebSockets', function() {
 				resp.push(message.utf8Data);
 				if (resp.length === 2) {
 					assert.deepEqual(resp, ['pong', 'pong']);
-					connection.drop();
 					done();
 				}
-			})
-			.on('close', function() {
-				console.log('connection closed');
 			});
+
 			connection.send('ping');
 			connection.send('ping');
 		})

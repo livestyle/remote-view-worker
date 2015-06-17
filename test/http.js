@@ -3,9 +3,6 @@
 var fs = require('fs');
 var path = require('path');
 var assert = require('assert');
-var request = require('request').defaults({
-	headers: {'X-RV-Host': 'rv.livestyle.io'}
-});
 var env = require('./assets/test-setup');
 
 describe('HTTP Tunnel', function() {
@@ -13,8 +10,7 @@ describe('HTTP Tunnel', function() {
 	after(env.after);
 
 	it('get', function(done) {
-		var socket = env.connect();
-		request('http://localhost:9001', {gzip: true}, function(err, res, body) {
+		env.request('http://localhost:9001', {gzip: true}, function(err, res, body, socket) {
 			assert(!err);
 			assert.equal(res.statusCode, 200);
 			assert(res.headers['content-type'].indexOf('text/html') !== -1);
@@ -24,11 +20,10 @@ describe('HTTP Tunnel', function() {
 	});
 
 	it('head', function(done) {
-		var socket = env.connect();
-		request({
+		env.request({
 			url: 'http://localhost:9001',
 			method: 'HEAD'
-		}, function(err, res, body) {
+		}, function(err, res, body, socket) {
 			assert(!err);
 			assert.equal(res.statusCode, 200);
 			assert(res.headers['content-type'].indexOf('text/html') !== -1);
@@ -39,15 +34,15 @@ describe('HTTP Tunnel', function() {
 	});
 
 	it('post', function(done) {
-		var socket = env.connect();
-		request.post({
+		env.request({
 			url: 'http://localhost:9001/post',
+			method: 'POST',
 			form: {
 				foo: 'bar',
 				one: 1,
 				text: 'Hello world'
 			}
-		}, function(err, res, body) {
+		}, function(err, res, body, socket) {
 			assert(!err);
 			assert.equal(res.statusCode, 200);
 			assert(res.headers['content-type'].indexOf('text/plain') !== -1);
@@ -57,11 +52,11 @@ describe('HTTP Tunnel', function() {
 	});
 
 	it('post multipart', function(done) {
-		var socket = env.connect();
 		var filePath = path.join(__dirname, 'assets/image.png');
 		var stat = fs.statSync(filePath);
-		request.post({
+		env.request({
 			url: 'http://localhost:9001/upload',
+			method: 'POST',
 			formData: {
 				file: {
 					value: fs.createReadStream(filePath),
@@ -71,7 +66,7 @@ describe('HTTP Tunnel', function() {
 					}
 				}
 			}
-		}, function(err, res, body) {
+		}, function(err, res, body, socket) {
 			assert(!err);
 			assert.equal(res.statusCode, 200);
 			assert(res.headers['content-type'].indexOf('text/plain') !== -1);
@@ -81,10 +76,10 @@ describe('HTTP Tunnel', function() {
 	});
 
 	it('post multipart (10 MB)', function(done) {
-		var socket = env.connect();
 		var data = require('crypto').pseudoRandomBytes(1024 * 1024 * 10);
-		request.post({
+		env.request({
 			url: 'http://localhost:9001/upload',
+			method: 'POST',
 			formData: {
 				file: {
 					value: data,
@@ -94,7 +89,7 @@ describe('HTTP Tunnel', function() {
 					}
 				}
 			}
-		}, function(err, res, body) {
+		}, function(err, res, body, socket) {
 			assert(!err);
 			assert.equal(res.statusCode, 200);
 			assert(res.headers['content-type'].indexOf('text/plain') !== -1);
@@ -105,8 +100,7 @@ describe('HTTP Tunnel', function() {
 
 	describe('Auth', function() {
 		it('no credentials', function(done) {
-			env.connect();
-			request('http://localhost:9001/auth', function(err, res, body) {
+			env.request('http://localhost:9001/auth', function(err, res, body) {
 				assert(!err);
 				assert.equal(res.statusCode, 401);
 				done();
@@ -114,8 +108,7 @@ describe('HTTP Tunnel', function() {
 		});
 
 		it('wrong credentials', function(done) {
-			env.connect();
-			request({
+			env.request({
 				url: 'http://localhost:9001/auth',
 				auth: {
 					'user': 'foo',
@@ -129,8 +122,7 @@ describe('HTTP Tunnel', function() {
 		});
 
 		it('right credentials', function(done) {
-			env.connect();
-			request({
+			env.request({
 				url: 'http://localhost:9001/auth',
 				auth: {
 					'user': 'admin',

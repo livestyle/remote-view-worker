@@ -2,13 +2,8 @@
 
 var path = require('path');
 var assert = require('assert');
-var request = require('request').defaults({
-	headers: {'X-RV-Host': 'rv.livestyle.io'}
-});
 var sessionManager = require('../lib/session-manager');
 var env = require('./assets/test-setup');
-
-var nextTick = process.nextTick;
 
 describe('Internals', function() {
 	before(function(done) {
@@ -46,16 +41,14 @@ describe('Internals', function() {
 		// connect only one socket but make two requests:
 		// the second request must be queued until 
 		// next socket is available
-		env.connect();
-
-		request('http://localhost:9001/', function(err, res, body) {
+		env.request('http://localhost:9001/', function(err, res, body, socket) {
 			assert(!err);
 			assert.equal(res.statusCode, 200);
 			assert(body.indexOf('Sample index file') !== -1);
 
 			setTimeout(env.connect, 300);
 
-			request('http://localhost:9001/index.html', function(err, res, body) {
+			env.rawRequest('http://localhost:9001/index.html', function(err, res, body) {
 				assert(!err);
 				assert.equal(res.statusCode, 200);
 				assert(body.indexOf('Sample index file') !== -1);
@@ -97,13 +90,13 @@ describe('Internals', function() {
 			tunnel.destroy();
 		}).once('destroy', function() {
 			for (var i = 0; i < requests; i++) {
-				request('http://localhost:9001/', complete);
+				env.rawRequest('http://localhost:9001/', complete);
 			}
 		});
 	});
 
 	it('no session', function(done) {
-		request('http://localhost:9001', {headers: {'X-RV-Host': 'not-exists.livestyle.io'}}, function(err, res, body) {
+		env.rawRequest('http://localhost:9001', {headers: {'X-RV-Host': 'not-exists.livestyle.io'}}, function(err, res, body) {
 			assert.equal(res.statusCode, 412);
 			done();
 		});
@@ -116,10 +109,10 @@ describe('Internals', function() {
 		var tunnel = env.connect(function() {
 			tunnel.destroy();
 		}).once('destroy', function() {
-			request('http://localhost:9001', function(err, res, body) {
+			env.rawRequest('http://localhost:9001', function(err, res, body) {
 				assert.equal(res.statusCode, 412);
 				assert.equal(body, 'No Remote View session for given request');
-				request('http://localhost:9001', function(err, res, body) {
+				env.rawRequest('http://localhost:9001', function(err, res, body) {
 					assert.equal(res.statusCode, 412);
 					assert.equal(body, 'No Remote View session for given request');
 					done();

@@ -2,6 +2,9 @@
 
 var assert = require('assert');
 var extend = require('xtend');
+var request = require('request').defaults({
+	headers: {'X-RV-Host': 'rv.livestyle.io'}
+});
 var mongo = require('mongodb').MongoClient;
 var Tunnel = require('remote-view-client').Tunnel;
 var localServer = require('./local-server');
@@ -33,13 +36,6 @@ module.exports = {
 		var localPortKey = options.ssl ? 'sslPort' : 'port';
 		var localOpt = {docroot:  options.docroot};
 		localOpt[localPortKey] = options.localServerPort;
-
-		// self.session = new Session({
-		// 	"sessionId": "test",
-		// 	"remoteSiteId": "rv",
-		// 	"localSite": `${options.ssl ? 'https' : 'http'}://localhost:${options.localServerPort}`,
-		// 	"maxConnections": options.maxConnections
-		// }, options.sessionOpt);
 
 		// fake local web-server
 		self.local = localServer(localOpt);
@@ -74,10 +70,8 @@ module.exports = {
 		var self = module.exports;
 		sessionManager.reset();
 		self.rv.destroy(function() {
-			console.log('rv destroyed');
 			self.local.stop();
 			_curDb.collection('Session').deleteOne({_id: 'session-test'}, function() {
-				console.log('collection destroyed');
 				_curDb.close()
 				_curDb = null;
 				done();
@@ -100,6 +94,20 @@ module.exports = {
 
 		return new Tunnel(url, callback);
 	},
+	request() {
+		var self = module.exports;
+		var args = [].slice.call(arguments, 0);
+		if (typeof args[args.length - 1] === 'function') {
+			var callback = args.pop();
+			args.push(function(err, res, body) {
+				callback(err, res, body, socket);
+			});
+		}
+		var socket = self.connect(function() {
+			request.apply(request, args);
+		});
+	},
+	rawRequest: request,
 	noSocketLeak(socket, callback) {
 		var self = module.exports;
 		// make sure socket connection is not leaked
