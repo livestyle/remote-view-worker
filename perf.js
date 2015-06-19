@@ -2,10 +2,10 @@
 'use strict';
 
 var path = require('path');
+var http = require('http');
 var mongo = require('mongodb').MongoClient;
 var server = require('./lib/server');
 var sessionManager = require('./lib/session-manager');
-var localServer = require('./test/assets/local-server');
 
 var mongoUrl = process.env.RV_MONGO_DB || 'mongodb://localhost:27017/rv';
 
@@ -36,10 +36,9 @@ mongo.connect(mongoUrl, function(err, db) {
 			console.log('Created temp session with id %s for local site %s', sessionId, localSite);
 		});
 
-		localServer({
-			docroot: path.join(__dirname, 'test/assets/'),
-			port: 9010,
-			sslPort: 9443
-		});
+		http.createServer(function(req, res) {
+			res.end('OK');
+		}).listen(9010);
+		console.log('Created test server at 9010');
 	});
 });

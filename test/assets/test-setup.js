@@ -55,15 +55,16 @@ module.exports = {
 			sessionManager.setup(db, options.sessionOpt);
 
 			// create some fake data
-			db.collection('Session').insert({
-				_id: 'session-test',
+			var sessionId = 'session-test';
+			db.collection('Session').update({_id: sessionId}, {$set: {
+				_id: sessionId,
 				user: 0,
 				publicId: 'rv',
 				localSite: `${options.ssl ? 'https' : 'http'}://localhost:${options.localServerPort}`,
 				created: Date.now(),
 				expiresAt: Date.now() + 24 * 60 * 60 * 1000,
 				active: true
-			}, done);
+			}}, {upsert: true}, done);
 		});
 	},
 	after(done) {
