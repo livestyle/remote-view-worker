@@ -34,6 +34,8 @@ mongo.connect(mongoUrl, function(err, db) {
 			}
 
 			console.log('Created temp session with id %s for local site %s', sessionId, localSite);
+
+			setInterval(stats, 1000);
 		});
 
 		http.createServer(function(req, res) {
@@ -42,3 +44,20 @@ mongo.connect(mongoUrl, function(err, db) {
 		console.log('Created test server at 9010');
 	});
 });
+
+var charm = require('charm')(process);
+charm.reset();
+
+function stats() {
+	// draw simple dashboard
+	var sessionIds = sessionManager.activeSessions();
+
+	var dy = 1;
+	charm.erase('screen').cursor(false);
+	sessionIds.forEach(function(id) {
+		sessionManager.getSession(id).then(function(session) {
+			charm.position(1, dy++)
+			.write(`${id}: opened: ${session.sockets.length}, pending: ${session._queue.length}, served: ${session._socketId}`);
+		});
+	});
+}
