@@ -68,6 +68,11 @@ function stats() {
 		line(`   ${key}: ${server.stats[key]}`);
 	});
 
+	if (server.stats.error.length) {
+		line(`${server.stats.error.length} errors:`);
+		server.stats.error.slice(0, 10).forEach(line);
+	}
+
 	curServer.getConnections(function(err, count) {
 		line('Actual connections: ' + count);
 	});
