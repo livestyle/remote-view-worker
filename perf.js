@@ -15,7 +15,7 @@ mongo.connect(mongoUrl, function(err, db) {
 		throw err;
 	}
 
-	sessionManager.setup(db);
+	sessionManager.setup(db, {trafficStoreTimeout: 5000});
 	curServer = server(function() {
 		console.log('Remote View worker is up and running on %d', this.address().port);
 		// create a test session for given url
