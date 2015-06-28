@@ -24,7 +24,8 @@ var defaultOptions = {
 };
 
 var defaultSessionOptions = {
-	idleTimeout: 5 * 60 * 1000
+	idleTimeout: 5 * 60 * 1000,
+	trafficLimit: undefined
 };
 
 module.exports = {
