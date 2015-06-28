@@ -23,6 +23,10 @@ var defaultOptions = {
 	ssl: false
 };
 
+var defaultSessionOptions = {
+	idleTimeout: 5 * 60 * 1000
+};
+
 module.exports = {
 	before(opt, done) {
 		var self = module.exports;
@@ -52,7 +56,7 @@ module.exports = {
 				throw err;
 			}
 			_curDb = db;
-			sessionManager.setup(db, options.sessionOpt);
+			sessionManager.setup(db, extend(defaultSessionOptions, options.sessionOpt || {}));
 
 			// create some fake data
 			db.collection('Session').insert({
