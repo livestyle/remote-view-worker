@@ -1,6 +1,5 @@
 'use strict'
 
-
 var assert = require('assert');
 var ws = require('websocket');
 var env = require('./assets/test-setup');

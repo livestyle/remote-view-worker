@@ -63,7 +63,7 @@ module.exports = {
 			db.collection('Session').insert({
 				_id: 'session-test',
 				user: 0,
-				publicId: 'rv',
+				publicId: 'rv.livestyle.io',
 				localSite: `${options.ssl ? 'https' : 'http'}://localhost:${options.localServerPort}`,
 				created: Date.now(),
 				expiresAt: Date.now() + 24 * 60 * 60 * 1000,
