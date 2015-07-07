@@ -66,7 +66,8 @@ describe('LiveStyle Connector', function() {
 				setTimeout(function() {
 					assert.equal(messageCount, 1);
 					assert.deepEqual(messageNames, ['diff']);
-					assert.deepEqual(messageURIs, ['http://localhost:9999/style/main.css']);
+					// resource URI must be rewritten to match RV publicId
+					assert.deepEqual(messageURIs, ['http://rv.livestyle.io/style/main.css']);
 					done()
 				}, 70);
 			})
