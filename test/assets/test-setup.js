@@ -16,7 +16,6 @@ var _curDb = null;
 
 var defaultOptions = {
 	docroot: __dirname,
-	sessionId: 'test',
 	reverseTunnelPort: 9001,
 	localServerPort: 9999,
 	maxConnections: 2,
@@ -25,7 +24,8 @@ var defaultOptions = {
 
 var defaultSessionOptions = {
 	idleTimeout: 5 * 60 * 1000,
-	trafficLimit: undefined
+	trafficLimit: undefined,
+	injectCode: '<!-- RV injected -->'
 };
 
 module.exports = {
