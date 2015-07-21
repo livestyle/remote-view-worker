@@ -6,6 +6,7 @@ var sessionManager = require('../lib/session-manager');
 var env = require('./assets/test-setup');
 
 describe('Internals', function() {
+	var sessionId = env.sessionId.toString();
 	before(function(done) {
 		env.before({
 			sessionOpt: {
@@ -21,7 +22,7 @@ describe('Internals', function() {
 	it('max connections', function(done) {
 		var complete = function() {
 			// redundant socket must be destroyed as soon as it was connected
-			sessionManager.getSession('session-test').then(function(session) {
+			sessionManager.getSession(sessionId).then(function(session) {
 				assert.equal(session.sockets.length, session.options.maxTunnels);
 
 				// clean-up
@@ -53,7 +54,7 @@ describe('Internals', function() {
 				assert.equal(res.statusCode, 200);
 				assert(body.indexOf('Sample index file') !== -1);
 
-				sessionManager.getSession('session-test').then(function(session) {
+				sessionManager.getSession(sessionId).then(function(session) {
 					assert.equal(session.sockets.length, 0);
 					done();
 				}).then(null, done);
@@ -120,7 +121,7 @@ describe('Internals', function() {
 			});
 		});
 
-		sessionManager.getSession('session-test').then(function(session) {
+		sessionManager.getSession(sessionId).then(function(session) {
 			session.destroy();
 		}).then(null, done);
 	});

@@ -11,7 +11,7 @@ var LiveStyleConnector = require('remote-view-client').LiveStyleConnector;
 describe('LiveStyle Connector', function() {
 	var ws;
 	var localUrl = 'ws://localhost:54009/livestyle';
-	var remoteUrl = 'ws://localhost:9001/session-test';
+	var remoteUrl = 'ws://localhost:9001/' + env.sessionId;
 
 	before(function(done) {
 		env.before(function() {

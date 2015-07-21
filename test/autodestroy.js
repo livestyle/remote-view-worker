@@ -6,6 +6,7 @@ var sessionManager = require('../lib/session-manager');
 var env = require('./assets/test-setup');
 
 describe('Auto-destroy session', function() {
+	var sessionId = env.sessionId.toString();
 	before(function(done) {
 		env.before({
 			sessionOpt: {
@@ -16,7 +17,7 @@ describe('Auto-destroy session', function() {
 	after(env.after);
 
 	it('keep alive on tunnel connect', function(done) {
-		sessionManager.getSession('session-test').then(function(session) {
+		sessionManager.getSession(sessionId).then(function(session) {
 			// get session instance and make sure it’s not destroyed after
 			// `idleTimeout` delay
 			setTimeout(function() {
@@ -32,7 +33,7 @@ describe('Auto-destroy session', function() {
 	});
 
 	it('destroy on last tunnel disconnect', function(done) {
-		sessionManager.getSession('session-test').then(function(session) {
+		sessionManager.getSession(sessionId).then(function(session) {
 			// get session instance and make sure it’s destroyed after last 
 			// tunnel disconnected
 			var tunnel = env.connect(function() {

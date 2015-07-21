@@ -6,6 +6,7 @@ var request = require('request').defaults({
 	headers: {'X-RV-Host': 'rv.livestyle.io'}
 });
 var mongo = require('mongodb').MongoClient;
+var ObjectID = require('mongodb').ObjectID;
 var Tunnel = require('remote-view-client').Tunnel;
 var localServer = require('./local-server');
 var rvServer = require('../../lib/server');
@@ -29,6 +30,7 @@ var defaultSessionOptions = {
 };
 
 module.exports = {
+	sessionId: new ObjectID(),
 	before(opt, done) {
 		var self = module.exports;
 		if (typeof opt === 'function') {
@@ -61,7 +63,7 @@ module.exports = {
 
 			// create some fake data
 			db.collection('Session').insert({
-				_id: 'session-test',
+				_id: module.exports.sessionId,
 				user: 0,
 				publicId: 'rv.livestyle.io',
 				localSite: `${options.ssl ? 'https' : 'http'}://localhost:${options.localServerPort}`,
@@ -76,7 +78,7 @@ module.exports = {
 		sessionManager.reset();
 		self.rv.destroy(function() {
 			self.local.stop();
-			_curDb.collection('Session').deleteOne({_id: 'session-test'}, function() {
+			_curDb.collection('Session').deleteOne({_id: module.exports.sessionId}, function() {
 				_curDb.close()
 				_curDb = null;
 				done();
@@ -94,7 +96,7 @@ module.exports = {
 		}
 
 		if (!url) {
-			url = `http://localhost:${self.options.reverseTunnelPort}/session-test`;
+			url = `http://localhost:${self.options.reverseTunnelPort}/${module.exports.sessionId}`;
 		}
 
 		return new Tunnel(url, callback);
@@ -117,7 +119,8 @@ module.exports = {
 		var self = module.exports;
 		// make sure socket connection is not leaked
 		setTimeout(function() {
-			sessionManager.getSession('session-test').then(function(session) {
+			var sessionId = module.exports.sessionId.toString();
+			sessionManager.getSession(sessionId).then(function(session) {
 				assert.equal(session.sockets.length, 0);
 				assert(socket.destroyed);
 				callback();

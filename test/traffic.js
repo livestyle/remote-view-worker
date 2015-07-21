@@ -6,6 +6,7 @@ var sessionManager = require('../lib/session-manager');
 var env = require('./assets/test-setup');
 
 describe('Traffic', function() {
+	var sessionId = env.sessionId.toString();
 	before(function(done) {
 		env.before({
 			sessionOpt: {
@@ -16,7 +17,7 @@ describe('Traffic', function() {
 	after(env.after);
 
 	it('destroy session on traffic limit', function(done) {
-		sessionManager.getSession('session-test').then(function(session) {
+		sessionManager.getSession(sessionId).then(function(session) {
 			// due to very low traffic limit this request should immediately
 			// return error
 			env.request('http://localhost:9001', function() {
