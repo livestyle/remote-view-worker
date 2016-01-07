@@ -1,6 +1,6 @@
 {
   "name": "remote-view-worker",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "LiveStyle Remote View server worker: handles connectivity with RV clients",
   "main": "./lib/server",
   "scripts": {
