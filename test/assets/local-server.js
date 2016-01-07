@@ -17,7 +17,14 @@ var ws = require('websocket');
 
 module.exports = function(options) {
 	var app = connect();
-	app.use(serveStatic(options.docroot));
+	app.use(serveStatic(options.docroot, {
+		setHeaders(res, p, stat) {
+			if (path.extname(p) === '.gz') {
+				res.setHeader('Content-Type', 'text/html');
+				res.setHeader('Content-Encoding', 'gzip');
+			}
+		}
+	}));
 	app.use(bodyParser.urlencoded({extended: true}));
 
 	// for testing HTTP basic auth requests
@@ -40,17 +47,6 @@ module.exports = function(options) {
 		plain(res, `Uploaded file: ${file.name} (${file.size} bytes)`);
 		fs.unlinkSync(file.path); // cleanup
 	});
-
-	// gzip output
-	app.use('/compressed', function(req, res) {
-		var file = path.join(options.docroot, 'compressed.html.gz');
-		res.writeHead(200, {
-			'Content-Type': 'text/html',
-			'Content-Encoding': 'gzip'
-		});
-		fs.createReadStream(file).pipe(res);
-	});
-
 
 	var httpServer, httpsServer, wsServer;
 	if (options.port) {

@@ -19,7 +19,7 @@ describe('Response transformations', function() {
 	});
 
 	it('inject into compressed HTML', function(done) {
-		env.request('http://localhost:9001/compressed', {gzip: true}, function(err, res, body) {
+		env.request('http://localhost:9001/compressed.html.gz', {gzip: true}, function(err, res, body) {
 			assert(!err);
 			assert.equal(res.statusCode, 200);
 			assert.equal(res.headers['content-encoding'], 'gzip'); 
